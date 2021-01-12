@@ -1,8 +1,12 @@
+<!DOCTYPE html>
+
+<html>
+
 <head>
     <title>Click mouse and draw line</title>
     <style type="text/css">
         canvas {
-            background-color: #ccc;
+            background-color: rgb(8, 8, 8);
         }
     </style>
 </head>
@@ -23,7 +27,7 @@
             }
             ctx.lineTo(x, y);
             ctx.lineWidth = 2;
-            ctx.strokeStyle = 'black';
+            ctx.strokeStyle = 'white';
             ctx.stroke();
             lines.push([x, y]);
             var sprite = {
@@ -38,15 +42,18 @@
         }
 
         function isCloseTo(sprite, target) {
-            var dist = Math.sqrt(((sprite.x - target.x) * (sprite.xtarget.x)) + ((sprite.y - target.y) * (sprite.y -
-                target.y)));
+            var dist = Math.sqrt(((sprite.x - target.x) * (sprite.x -
+                target.x)) + ((sprite.y - target.y) * (sprite.y - target.y)));
+
             console.log(dist);
             if (lines.length > 1 && dist < 6) {
                 console.log('make polygon');
                 ctx.lineTo(target.x, target.y);
                 ctx.fillStyle = 'red';
+
                 ctx.fill();
                 lines = [];
+
             }
         }
     </script>
