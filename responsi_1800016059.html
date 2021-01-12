@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="ularkotak.png">
+    <title>Ular Kotak Simpel - 1800016059</title>
+    <style>
+        canvas {
+            display: block;
+            position: absolute;
+            border: 10px outset rgb(201, 201, 201);
+            margin: auto;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+
+        body {
+            background-color: darkgreen;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        var
+            COLS = 26,
+            ROWS = 26,
+
+            EMPTY = 0,
+            ULAR = 1,
+            BUAH = 2,
+
+            LEFT = 0,
+            UP = 1,
+            RIGHT = 2,
+            DOWN = 3,
+
+            KEY_LEFT = 37,
+            KEY_UP = 38,
+            KEY_RIGHT = 39,
+            KEY_DOWN = 40,
+
+            canvas,
+            ctx,
+            keystate,
+            frames,
+            score;
+
+
+        ular = {
+
+            direction: null,
+            last: null,
+            _queue: null,
+
+
+            init: function (d, x, y) {
+                this.direction = d;
+
+                this._queue = [];
+                this.insert(x, y);
+            },
+
+
+            insert: function (x, y) {
+
+                this._queue.unshift({
+                    x: x,
+                    y: y
+                });
+                this.last = this._queue[0];
+            },
+
+
+            remove: function () {
+
+                return this._queue.pop();
+            }
+        };
+
+
+        grid = {
+
+            width: null,
+            height: null,
+            _grid: null,
+
+
+            init: function (d, c, r) {
+                this.width = c;
+                this.height = r;
+
+                this._grid = [];
+                for (var x = 0; x < c; x++) {
+                    this._grid.push([]);
+                    for (var y = 0; y < r; y++) {
+                        this._grid[x].push(d);
+                    }
+                }
+            },
+
+
+            set: function (val, x, y) {
+                this._grid[x][y] = val;
+            },
+
+
+            get: function (x, y) {
+                return this._grid[x][y];
+            }
+        }
+
+        function setFood() {
+            var empty = [];
+
+            for (var x = 0; x < grid.width; x++) {
+                for (var y = 0; y < grid.height; y++) {
+                    if (grid.get(x, y) === EMPTY) {
+                        empty.push({
+                            x: x,
+                            y: y
+                        });
+                    }
+                }
+            }
+
+            var randpos = empty[Math.round(Math.random() * (empty.length - 1))];
+            grid.set(BUAH, randpos.x, randpos.y);
+        }
+
+        function init() {
+            score = 0;
+
+            grid.init(EMPTY, COLS, ROWS);
+
+            var sp = {
+                x: Math.floor(COLS / 2),
+                y: ROWS - 1
+            };
+            ular.init(UP, sp.x, sp.y);
+            grid.set(ULAR, sp.x, sp.y);
+
+            setFood();
+        }
+
+        function draw() {
+
+            var tw = canvas.width / grid.width;
+            var th = canvas.height / grid.height;
+
+            for (var x = 0; x < grid.width; x++) {
+                for (var y = 0; y < grid.height; y++) {
+                    switch (grid.get(x, y)) {
+                        case
+                        EMPTY:
+                            ctx.fillStyle = "#000";
+                            break;
+                        case ULAR:
+                            ctx.fillStyle = "#dafc19";
+                            break;
+                        case BUAH:
+                            ctx.fillStyle = "#e80c0c";
+                            break;
+                    }
+                    ctx.fillRect(x * tw, y * th, tw, th);
+                }
+            }
+            ctx.fillStyle = "#fff";
+            ctx.fillText("SCORE: " + score, 10, 20);
+        }
+
+        function loop() {
+            update();
+            draw();
+
+            window.requestAnimationFrame(loop, canvas);
+        }
+
+
+        function update() {
+            frames++;
+
+
+            if (keystate[KEY_LEFT] && ular.direction !== RIGHT) {
+                ular.direction = LEFT;
+            }
+            if (keystate[KEY_UP] && ular.direction !== DOWN) {
+                ular.direction = UP;
+            }
+            if (keystate[KEY_RIGHT] && ular.direction !== LEFT) {
+                ular.direction = RIGHT;
+            }
+            if (keystate[KEY_DOWN] && ular.direction !== UP) {
+                ular.direction = DOWN;
+            }
+
+
+            if (frames % 5 === 0) {
+
+                var nx = ular.last.x;
+                var ny = ular.last.y;
+
+
+                switch (ular.direction) {
+                    case LEFT:
+                        nx--;
+                        break;
+                    case UP:
+                        ny--;
+                        break;
+                    case RIGHT:
+                        nx++;
+                        break;
+                    case DOWN:
+                        ny++;
+                        break;
+                }
+
+
+                if (0 > nx || nx > grid.width - 1 ||
+                    0 > ny || ny > grid.height - 1 ||
+                    grid.get(nx, ny) === ULAR
+                ) {
+                    return init();
+                }
+
+
+                if (grid.get(nx, ny) === BUAH) {
+
+                    score++;
+                    setFood();
+                } else {
+
+                    var ekor = ular.remove();
+                    grid.set(EMPTY, ekor.x, ekor.y);
+                }
+
+
+                grid.set(ULAR, nx, ny);
+                ular.insert(nx, ny);
+            }
+        }
+
+        function main() {
+
+            canvas = document.createElement("canvas");
+            canvas.width = COLS * 20;
+            canvas.height = ROWS * 20;
+            ctx = canvas.getContext("2d");
+
+            document.body.appendChild(canvas);
+
+
+            ctx.font = "12px Helvetica";
+
+            frames = 0;
+            keystate = {};
+
+            document.addEventListener("keydown", function (evt) {
+                keystate[evt.keyCode] = true;
+            });
+            document.addEventListener("keyup", function (evt) {
+                delete keystate[evt.keyCode];
+            });
+
+
+            init();
+            loop();
+        }
+
+
+        main();
+    </script>
+</body>
+
+</html>
